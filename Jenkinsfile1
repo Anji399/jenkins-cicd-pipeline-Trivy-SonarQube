@@ -8,7 +8,8 @@ pipeline {
         }
         stage('OWASP FS SCAN') { 
             steps { 
-                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check' dependencyCheckPublisher pattern: '**/dependency-check-report.xml' 
+                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check'
+                dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
             } 
         }
         stage('Trivy FileSystem Scan') {
@@ -26,18 +27,17 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                        withCredentials([usernamePassword(credentialsId: 'docker', passwordVariable: 'DOCKER_PWD', usernameVariable: 'DOCKER_USER')]) {
-                            sh 'docker push mvpar/testapp:latest'
-                        }    
+                    withCredentials([usernamePassword(credentialsId: 'docker', passwordVariable: 'DOCKER_PWD', usernameVariable: 'DOCKER_USER')]) {
+                        sh 'docker push mvpar/testapp:latest'
+                    }    
                 }
             }
         }
-         stage('Trivy Image Scan') {
+        stage('Trivy Image Scan') {
             steps {
                 sh "trivy image --format json -o trivy-image-report.json mvpar/testapp:latest"
             }
         }
-    
         stage('Deploy To Container') {
             steps {
                 sh "docker run -d -p 8081:80 mvpar/testapp"
