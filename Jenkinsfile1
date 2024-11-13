@@ -1,0 +1,43 @@
+pipeline {
+    agent any
+    stages {
+        stage('Git Checkout') {
+            steps {
+                git changelog: false, poll: false, url: 'https://github.com/Anji399/jenkins-cicd-pipeline-Trivy-SonarQube.git'
+            }
+        }
+    
+        stage('Trivy FileSystem Scan') {
+            steps {
+                sh "trivy fs --format table -o trivy-fs-report.html ."
+            }
+        }
+        stage('Build & Tag Docker Image') {
+            steps {
+                script {
+                      sh 'docker build -t mvpar/testapp .' 
+                }
+            }
+        }     
+        stage('Push Docker Image') {
+            steps {
+                script {
+                        withCredentials([usernamePassword(credentialsId: 'docker', passwordVariable: 'DOCKER_PWD', usernameVariable: 'DOCKER_USER')]) {
+                            sh 'docker push mvpar/testapp:latest'
+                        }    
+                }
+            }
+        }
+         stage('Trivy Image Scan') {
+            steps {
+                sh "trivy image --format json -o trivy-image-report.json mvpar/testapp:latest"
+            }
+        }
+    
+        stage('Deploy To Container') {
+            steps {
+                sh "docker run -d -p 8081:80 mvpar/testapp"
+            }
+        }
+    }
+}
