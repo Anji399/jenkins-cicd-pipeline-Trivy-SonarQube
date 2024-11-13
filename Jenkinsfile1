@@ -6,7 +6,11 @@ pipeline {
                 git changelog: false, poll: false, url: 'https://github.com/Anji399/jenkins-cicd-pipeline-Trivy-SonarQube.git'
             }
         }
-    
+        stage('OWASP FS SCAN') { 
+            steps { 
+                dependencyCheck additionalArguments: '--scan ./ --disableYarnAudit --disableNodeAudit', odcInstallation: 'DP-Check' dependencyCheckPublisher pattern: '**/dependency-check-report.xml' 
+            } 
+        }
         stage('Trivy FileSystem Scan') {
             steps {
                 sh "trivy fs --format table -o trivy-fs-report.html ."
